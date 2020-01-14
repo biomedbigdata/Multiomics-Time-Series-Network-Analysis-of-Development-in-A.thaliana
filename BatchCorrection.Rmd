@@ -1,0 +1,78 @@
+---
+title: "Batch Correction in LF"
+output: html_notebook
+---
+# Proteomics
+```{r}
+LF <- read.csv(file = './Data/Raw/proteinGroups_LF.tsv', sep = '\t', header = TRUE)
+LF <- as.data.frame(LF)
+LF <- subset(LF, LF$Only.identified.by.site != "+" & LF$Reverse != "+" & LF$Potential.contaminant != "+")
+```
+
+```{r}
+all_cols <- c('Reporter.intensity.0.LF1', 'Reporter.intensity.0.LF2',
+              'Reporter.intensity.1.LF1', 'Reporter.intensity.1.LF2',
+              'Reporter.intensity.2.LF1', 'Reporter.intensity.2.LF2',
+              'Reporter.intensity.3.LF1', 'Reporter.intensity.3.LF2',
+              'Reporter.intensity.4.LF1', 'Reporter.intensity.4.LF2',
+              'Reporter.intensity.5.LF1', 'Reporter.intensity.5.LF2',
+              'Reporter.intensity.6.LF1', 'Reporter.intensity.6.LF2',
+              'Reporter.intensity.7.LF1', 'Reporter.intensity.7.LF2',
+              'Reporter.intensity.8.LF1', 'Reporter.intensity.8.LF2',
+              'Reporter.intensity.9.LF1', 'Reporter.intensity.9.LF2')
+expr <- LF[, all_cols]
+scaled <- scale(expr, center = TRUE, scale = FALSE) # mean centering
+```
+
+```{r}
+LF_transp <- as.data.frame(t(scaled))
+modcombat <- as.matrix(model.matrix(~1, data = LF_transp))
+```
+
+```{r}
+batch <- c('1','2','1','2','1','2','1','2','1','2','1','2','1','2','1','2','1','2','1','2')
+LF_norm <- ComBat(dat=t(LF_transp), batch = batch, mod = modcombat)
+LF_norm <- LF_norm + abs(min(LF_norm))
+print('finished')
+```
+```{r}
+write.table(LF_norm, file='./Processed/PostComBat_NonLog.tsv', quote = FALSE, sep='\t', row.names = FALSE)
+```
+
+
+# Phosphoproteomics
+
+```{r}
+LF_P <- read.csv(file = './Data/Raw/Phospho (STY)Sites_LF.tsv', sep = '\t', header = TRUE)
+LF_P <- as.data.frame(LF_P)
+LF_P <- subset(LF_P, LF_P$Reverse != "+" & LF_P$Potential.contaminant != "+")
+
+all_cols <- c('Reporter.intensity.0.P_LF1', 'Reporter.intensity.0.P_LF2',
+              'Reporter.intensity.1.P_LF1', 'Reporter.intensity.1.P_LF2',
+              'Reporter.intensity.2.P_LF1', 'Reporter.intensity.2.P_LF2',
+              'Reporter.intensity.3.P_LF1', 'Reporter.intensity.3.P_LF2',
+              'Reporter.intensity.4.P_LF1', 'Reporter.intensity.4.P_LF2',
+              'Reporter.intensity.5.P_LF1', 'Reporter.intensity.5.P_LF2',
+              'Reporter.intensity.6.P_LF1', 'Reporter.intensity.6.P_LF2',
+              'Reporter.intensity.7.P_LF1', 'Reporter.intensity.7.P_LF2',
+              'Reporter.intensity.8.P_LF1', 'Reporter.intensity.8.P_LF2',
+              'Reporter.intensity.9.P_LF1', 'Reporter.intensity.9.P_LF2')
+expr <- LF_P[, all_cols]
+scaled <- scale(expr, center = TRUE, scale = FALSE) # mean centering
+
+```
+
+```{r}
+LF_transp <- as.data.frame(t(scaled))
+modcombat <- as.matrix(model.matrix(~1, data = LF_transp))
+
+batch <- c('1','2','1','2','1','2','1','2','1','2','1','2','1','2','1','2','1','2','1','2')
+p_LF_norm <- ComBat(dat=t(LF_transp), batch = batch, mod = modcombat)
+p_LF_norm <- p_LF_norm + abs(min(p_LF_norm))
+print('finished')
+```
+
+```{r}
+write.table(p_LF_norm, file='./Processed/PostComBat_P_NonLog.tsv', quote = FALSE, sep='\t', row.names = FALSE)
+```
+
